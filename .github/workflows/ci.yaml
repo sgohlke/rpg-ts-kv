@@ -1,0 +1,21 @@
+name: RPG
+on: 
+  push:
+
+jobs:
+  rpgtskv:
+    name: Install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: '1.36.2'
+      - name: Cache https://
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/deno/deps/https
+          key: deno-https/v1-${{ github.sha }}
+          restore-keys: deno-https/v1-
+      - run: deno task lint
+      - run: deno task coverage
