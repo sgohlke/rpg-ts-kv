@@ -15,8 +15,10 @@ export class KVPlayerDataStore implements PlayerDataStore {
       return this.kv
    }
 
-   async addPlayerAccount(playerAccount: PlayerAccount): Promise<void> {
+   async addPlayerAccount(playerAccount: PlayerAccount): Promise<string> {
       const kv = await this.getKv()
+      const playerId = crypto.randomUUID()
+      playerAccount.playerId = playerId
       const primaryKey = [PLAYER_ACCOUNT_SCHEMA, playerAccount.playerId]
       const byUsernameKey = [
          PLAYER_ACCOUNT_BY_USER_NAME,
@@ -33,15 +35,12 @@ export class KVPlayerDataStore implements PlayerDataStore {
             `Player account with ID ${playerAccount.playerId} or username ${playerAccount.userName} already exists`,
          )
       }
-
-      kv.set([PLAYER_ACCOUNT_SCHEMA, playerAccount.playerId], playerAccount)
+      return playerId
    }
 
    async createPlayer(playerData: PlayerData): Promise<string> {
       const kv = await this.getKv()
-      const playerId = crypto.randomUUID()
-      playerData.playerId = playerId
-      const primaryKey = [PLAYER_DATA_SCHEMA, playerId]
+      const primaryKey = [PLAYER_DATA_SCHEMA, playerData.playerId]
 
       const res = await kv.atomic()
          .check({ key: primaryKey, versionstamp: null })
@@ -49,10 +48,10 @@ export class KVPlayerDataStore implements PlayerDataStore {
          .commit()
       if (!res.ok) {
          throw new TypeError(
-            `PlayerData for player with ID ${playerId} already exists`,
+            `PlayerData for player with ID ${playerData.playerId} already exists`,
          )
       }
-      return playerId
+      return playerData.playerId
    }
 
    async doesPlayerExist(userName: string): Promise<boolean> {
