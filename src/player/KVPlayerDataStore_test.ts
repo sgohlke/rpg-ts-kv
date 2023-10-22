@@ -29,14 +29,14 @@ Deno.test('Player is correctly created and added to Player list', async () => {
       userName: 'doesnotmatter',
       userPassword: 'doesnotmatter',
    })
-   if (typeof newPlayerId === 'string' ) {
+   if (typeof newPlayerId === 'string') {
       assertEquals(newPlayerId.length, 36)
       const playerOne: PlayerData = {
          playerId: newPlayerId,
          name: 'Test Player',
          units: [slimeUnit, parentSlimeUnit],
       }
-   
+
       await playerDataStore.createPlayer(playerOne)
       const newPlayer = await playerDataStore.getPlayer(newPlayerId)
       assert(newPlayer)
@@ -59,7 +59,7 @@ Deno.test('Player is correctly created and added to Player list', async () => {
    } else {
       fail('Should not reach here!')
    }
-   
+
    kvInstance.close()
 })
 

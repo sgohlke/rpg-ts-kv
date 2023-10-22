@@ -1,4 +1,9 @@
-import { GeneralError, PlayerAccount, PlayerData, PlayerDataStore } from '../index.ts'
+import {
+   GeneralError,
+   PlayerAccount,
+   PlayerData,
+   PlayerDataStore,
+} from '../index.ts'
 
 export const PLAYER_ACCOUNT_SCHEMA = 'playeraccount'
 export const PLAYER_ACCOUNT_BY_USER_NAME = PLAYER_ACCOUNT_SCHEMA + 'by_username'
@@ -15,7 +20,9 @@ export class KVPlayerDataStore implements PlayerDataStore {
       return this.kv
    }
 
-   async addPlayerAccount(playerAccount: PlayerAccount): Promise<string | GeneralError> {
+   async addPlayerAccount(
+      playerAccount: PlayerAccount,
+   ): Promise<string | GeneralError> {
       const kv = await this.getKv()
       const playerId = crypto.randomUUID()
       playerAccount.playerId = playerId
@@ -32,8 +39,8 @@ export class KVPlayerDataStore implements PlayerDataStore {
          .commit()
       if (!res.ok) {
          return {
-            errorMessage: `Player account with ID ${playerAccount.playerId} or username ${playerAccount.userName} already exists`,
-
+            errorMessage:
+               `Player account with ID ${playerAccount.playerId} or username ${playerAccount.userName} already exists`,
          }
       }
       return playerId
@@ -49,7 +56,8 @@ export class KVPlayerDataStore implements PlayerDataStore {
          .commit()
       if (!res.ok) {
          return {
-            errorMessage: `PlayerData for player with ID ${playerData.playerId} already exists`,
+            errorMessage:
+               `PlayerData for player with ID ${playerData.playerId} already exists`,
          }
       }
       return playerData.playerId
@@ -119,7 +127,8 @@ export class KVPlayerDataStore implements PlayerDataStore {
          .commit()
       if (!res.ok) {
          return {
-            errorMessage: `An error occurred while inserting access token for player ${playerId}`,
+            errorMessage:
+               `An error occurred while inserting access token for player ${playerId}`,
          }
       }
       return accessToken
