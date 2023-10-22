@@ -1,4 +1,4 @@
-import { assert, assertEquals } from '../deps.ts'
+import { assert, assertEquals, fail } from '../deps.ts'
 import {
    KVPlayerDataStore,
    PLAYER_ACCOUNT_BY_USER_NAME,
@@ -29,28 +29,37 @@ Deno.test('Player is correctly created and added to Player list', async () => {
       userName: 'doesnotmatter',
       userPassword: 'doesnotmatter',
    })
-   assertEquals(newPlayerId.length, 36)
-   const playerOne: PlayerData = {
-      playerId: newPlayerId,
-      name: 'Test Player',
-      units: [slimeUnit, parentSlimeUnit],
+   if (typeof newPlayerId === 'string' ) {
+      assertEquals(newPlayerId.length, 36)
+      const playerOne: PlayerData = {
+         playerId: newPlayerId,
+         name: 'Test Player',
+         units: [slimeUnit, parentSlimeUnit],
+      }
+   
+      await playerDataStore.createPlayer(playerOne)
+      const newPlayer = await playerDataStore.getPlayer(newPlayerId)
+      assert(newPlayer)
+      if ('playerId' in newPlayer) {
+         assertEquals(newPlayer.playerId, newPlayerId)
+         assertEquals(newPlayer.name, 'Test Player')
+         assertEquals(newPlayer.units[0], {
+            name: slimeUnit.name,
+            defaultStatus: slimeUnit.defaultStatus,
+            joinNumber: 1,
+         })
+         assertEquals(newPlayer.units[1], {
+            name: parentSlimeUnit.name,
+            defaultStatus: parentSlimeUnit.defaultStatus,
+            joinNumber: 2,
+         })
+      } else {
+         fail('Should not reach here!')
+      }
+   } else {
+      fail('Should not reach here!')
    }
-
-   await playerDataStore.createPlayer(playerOne)
-   const newPlayer = await playerDataStore.getPlayer(newPlayerId)
-   assert(newPlayer)
-   assertEquals(newPlayer.playerId, newPlayerId)
-   assertEquals(newPlayer.name, 'Test Player')
-   assertEquals(newPlayer.units[0], {
-      name: slimeUnit.name,
-      defaultStatus: slimeUnit.defaultStatus,
-      joinNumber: 1,
-   })
-   assertEquals(newPlayer.units[1], {
-      name: parentSlimeUnit.name,
-      defaultStatus: parentSlimeUnit.defaultStatus,
-      joinNumber: 2,
-   })
+   
    kvInstance.close()
 })
 

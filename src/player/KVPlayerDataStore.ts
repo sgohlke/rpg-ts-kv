@@ -1,4 +1,4 @@
-import { PlayerAccount, PlayerData, PlayerDataStore } from '../index.ts'
+import { GeneralError, PlayerAccount, PlayerData, PlayerDataStore } from '../index.ts'
 
 export const PLAYER_ACCOUNT_SCHEMA = 'playeraccount'
 export const PLAYER_ACCOUNT_BY_USER_NAME = PLAYER_ACCOUNT_SCHEMA + 'by_username'
@@ -15,7 +15,7 @@ export class KVPlayerDataStore implements PlayerDataStore {
       return this.kv
    }
 
-   async addPlayerAccount(playerAccount: PlayerAccount): Promise<string> {
+   async addPlayerAccount(playerAccount: PlayerAccount): Promise<string | GeneralError> {
       const kv = await this.getKv()
       const playerId = crypto.randomUUID()
       playerAccount.playerId = playerId
@@ -31,14 +31,15 @@ export class KVPlayerDataStore implements PlayerDataStore {
          .set(byUsernameKey, playerAccount)
          .commit()
       if (!res.ok) {
-         throw new TypeError(
-            `Player account with ID ${playerAccount.playerId} or username ${playerAccount.userName} already exists`,
-         )
+         return {
+            errorMessage: `Player account with ID ${playerAccount.playerId} or username ${playerAccount.userName} already exists`,
+
+         }
       }
       return playerId
    }
 
-   async createPlayer(playerData: PlayerData): Promise<string> {
+   async createPlayer(playerData: PlayerData): Promise<string | GeneralError> {
       const kv = await this.getKv()
       const primaryKey = [PLAYER_DATA_SCHEMA, playerData.playerId]
 
@@ -47,20 +48,20 @@ export class KVPlayerDataStore implements PlayerDataStore {
          .set(primaryKey, playerData)
          .commit()
       if (!res.ok) {
-         throw new TypeError(
-            `PlayerData for player with ID ${playerData.playerId} already exists`,
-         )
+         return {
+            errorMessage: `PlayerData for player with ID ${playerData.playerId} already exists`,
+         }
       }
       return playerData.playerId
    }
 
-   async doesPlayerExist(userName: string): Promise<boolean> {
+   async doesPlayerExist(userName: string): Promise<boolean | GeneralError> {
       return await this.getPlayerAccountForName(userName) !== undefined
    }
 
    async getAccessTokenForPlayer(
       playerId: string,
-   ): Promise<string | undefined> {
+   ): Promise<string | undefined | GeneralError> {
       const kv = await this.getKv()
       const maybePlayerAccessToken = await kv.get<string>([
          PLAYER_ACCESS_TOKEN_SCHEMA,
@@ -71,7 +72,7 @@ export class KVPlayerDataStore implements PlayerDataStore {
 
    async getPlayer(
       playerId: string | undefined,
-   ): Promise<PlayerData | undefined> {
+   ): Promise<PlayerData | undefined | GeneralError> {
       if (playerId) {
          const kv = await this.getKv()
          const maybePlayerData = await kv.get<PlayerData>([
@@ -86,7 +87,7 @@ export class KVPlayerDataStore implements PlayerDataStore {
 
    async getPlayerAccount(
       playerId: string,
-   ): Promise<PlayerAccount | undefined> {
+   ): Promise<PlayerAccount | undefined | GeneralError> {
       const kv = await this.getKv()
       const maybePlayerAccount = await kv.get<PlayerAccount>([
          PLAYER_ACCOUNT_SCHEMA,
@@ -97,7 +98,7 @@ export class KVPlayerDataStore implements PlayerDataStore {
 
    async getPlayerAccountForName(
       username: string,
-   ): Promise<PlayerAccount | undefined> {
+   ): Promise<PlayerAccount | undefined | GeneralError> {
       const kv = await this.getKv()
       const maybePlayerAccount = await kv.get<PlayerAccount>([
          PLAYER_ACCOUNT_BY_USER_NAME,
@@ -109,7 +110,7 @@ export class KVPlayerDataStore implements PlayerDataStore {
    async setPlayerAccessToken(
       playerId: string,
       accessToken: string,
-   ): Promise<void> {
+   ): Promise<string | GeneralError> {
       const kv = await this.getKv()
       const primaryKey = [PLAYER_ACCESS_TOKEN_SCHEMA, playerId]
 
@@ -117,9 +118,10 @@ export class KVPlayerDataStore implements PlayerDataStore {
          .set(primaryKey, accessToken)
          .commit()
       if (!res.ok) {
-         throw new TypeError(
-            `An error occurred while inserting access token for player ${playerId}`,
-         )
+         return {
+            errorMessage: `An error occurred while inserting access token for player ${playerId}`,
+         }
       }
+      return accessToken
    }
 }
