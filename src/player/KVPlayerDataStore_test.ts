@@ -26,11 +26,59 @@ Deno.test('Player is correctly created and added to Player list', async () => {
    const newPlayerId = await playerDataStore.addPlayerAccount({
       playerId: 'doesnotmatter',
       name: 'Test Player',
-      userName: 'doesnotmatter',
-      userPassword: 'doesnotmatter',
+      userName: 'playerUserName',
+      userPassword: 'playerUserPassword',
    })
+
    if (typeof newPlayerId === 'string') {
       assertEquals(newPlayerId.length, 36)
+
+      //Test doesPlayerExist
+      const doesPlayerExist = await playerDataStore.doesPlayerExist(
+         'playerUserName',
+      )
+      if (typeof doesPlayerExist === 'boolean') {
+         assertEquals(doesPlayerExist, true)
+      } else {
+         fail('Should not reach here!')
+      }
+
+      //Test getPlayerAccount
+      const playerAccountFromDatabase = await playerDataStore.getPlayerAccount(
+         newPlayerId,
+      )
+      assert(playerAccountFromDatabase)
+      if ('playerId' in playerAccountFromDatabase) {
+         assertEquals(playerAccountFromDatabase.playerId, newPlayerId)
+         assertEquals(playerAccountFromDatabase.name, 'Test Player')
+         assertEquals(playerAccountFromDatabase.userName, 'playerUserName')
+         assertEquals(
+            playerAccountFromDatabase.userPassword,
+            'playerUserPassword',
+         )
+      } else {
+         fail('Should not reach here!')
+      }
+
+      // Test set and get playerAccessToken
+      const playerAccessToken = await playerDataStore.setPlayerAccessToken(
+         newPlayerId,
+         'AT-123',
+      )
+      if (typeof playerAccessToken === 'string') {
+         assertEquals(playerAccessToken, 'AT-123')
+         const playerAccessTokenFromDatabase = await playerDataStore
+            .getAccessTokenForPlayer(newPlayerId)
+         assert(playerAccessTokenFromDatabase)
+         if (typeof playerAccessTokenFromDatabase === 'string') {
+            assertEquals(playerAccessTokenFromDatabase, 'AT-123')
+         } else {
+            fail('Should not reach here!')
+         }
+      } else {
+         fail('Should not reach here!')
+      }
+
       const playerOne: PlayerData = {
          playerId: newPlayerId,
          name: 'Test Player',
