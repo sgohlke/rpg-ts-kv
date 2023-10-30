@@ -119,12 +119,7 @@ export class KVPlayerDataStore implements PlayerDataStore {
       playerId: string,
       accessToken: string,
    ): Promise<string | GeneralError> {
-      const kv = await this.getKv()
-      const primaryKey = [PLAYER_ACCESS_TOKEN_SCHEMA, playerId]
-
-      const res = await kv.atomic()
-         .set(primaryKey, accessToken)
-         .commit()
+      const res = await this.insertAccessToken(playerId, accessToken)
       if (!res.ok) {
          return {
             errorMessage:
@@ -132,5 +127,16 @@ export class KVPlayerDataStore implements PlayerDataStore {
          }
       }
       return accessToken
+   }
+
+   async insertAccessToken(
+      playerId: string,
+      accessToken: string,
+   ): Promise<Deno.KvCommitResult | Deno.KvCommitError> {
+      const primaryKey = [PLAYER_ACCESS_TOKEN_SCHEMA, playerId]
+      const kv = await this.getKv()
+      return await kv.atomic()
+         .set(primaryKey, accessToken)
+         .commit()
    }
 }

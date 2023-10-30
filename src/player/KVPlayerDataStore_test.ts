@@ -33,6 +33,22 @@ Deno.test('Player is correctly created and added to Player list', async () => {
    if (typeof newPlayerId === 'string') {
       assertEquals(newPlayerId.length, 36)
 
+      // Should not be able to register the same user again
+      const duplicatePlayerId = await playerDataStore.addPlayerAccount({
+         playerId: 'doesnotmatter',
+         name: 'Test Player',
+         userName: 'playerUserName',
+         userPassword: 'playerUserPassword',
+      })
+      if (typeof duplicatePlayerId === 'object') {
+         assertEquals(
+            duplicatePlayerId.errorMessage.includes('already exist'),
+            true,
+         )
+      } else {
+         fail('Should not reach here!')
+      }
+
       //Test doesPlayerExist
       const doesPlayerExist = await playerDataStore.doesPlayerExist(
          'playerUserName',
@@ -60,6 +76,12 @@ Deno.test('Player is correctly created and added to Player list', async () => {
          fail('Should not reach here!')
       }
 
+      //Should not get a PlayerAccount for a non-existing playerId
+      const nonExistingPlayerAccount = await playerDataStore.getPlayerAccount(
+         'doesNotExist',
+      )
+      assertEquals(nonExistingPlayerAccount, undefined)
+
       // Test set and get playerAccessToken
       const playerAccessToken = await playerDataStore.setPlayerAccessToken(
          newPlayerId,
@@ -75,6 +97,11 @@ Deno.test('Player is correctly created and added to Player list', async () => {
          } else {
             fail('Should not reach here!')
          }
+
+         // Should not get an access token if player does not exist
+         const nonExistingPlayerAccessToken = await playerDataStore
+            .getAccessTokenForPlayer('doesNotExists')
+         assertEquals(nonExistingPlayerAccessToken, undefined)
       } else {
          fail('Should not reach here!')
       }
@@ -104,6 +131,50 @@ Deno.test('Player is correctly created and added to Player list', async () => {
       } else {
          fail('Should not reach here!')
       }
+
+      // Should not get a player if playerId is undefined
+      const undefinedPlayer = await playerDataStore.getPlayer(undefined)
+      assertEquals(undefinedPlayer, undefined)
+
+      // Should not get a player if Player wit playerId does not exist
+      const nonExistingPlayer = await playerDataStore.getPlayer('doesNotExist')
+      assertEquals(nonExistingPlayer, undefined)
+
+      // Should not be able to create the same Player again
+      const createPlayerResult = await playerDataStore.createPlayer(playerOne)
+      if (typeof createPlayerResult === 'object') {
+         assertEquals(
+            createPlayerResult.errorMessage.includes('already exist'),
+            true,
+         )
+      } else {
+         fail('Should not reach here!')
+      }
+   } else {
+      fail('Should not reach here!')
+   }
+
+   // Should not get a PlayerAccount is the user with the username does not exist
+   const nonExistingPlayerAccountForName = await playerDataStore
+      .getPlayerAccountForName('unknownPlayer')
+   assertEquals(nonExistingPlayerAccountForName, undefined)
+
+   // Should get an error if inserting a PlayerAccessToken fails
+   playerDataStore.insertAccessToken = async function () {
+      return await new Promise((resolve) => {
+         resolve({ ok: false })
+      })
+   }
+
+   const accessTokenInsertError = await playerDataStore.setPlayerAccessToken(
+      newPlayerId,
+      'AT-123',
+   )
+   if (typeof accessTokenInsertError === 'object') {
+      assertEquals(
+         accessTokenInsertError.errorMessage,
+         `An error occurred while inserting access token for player ${newPlayerId}`,
+      )
    } else {
       fail('Should not reach here!')
    }
