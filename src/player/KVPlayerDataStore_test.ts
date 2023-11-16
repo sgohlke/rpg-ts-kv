@@ -188,10 +188,10 @@ async function cleanupKV(kvInstance: Deno.Kv) {
       prefix: [PLAYER_ACCOUNT_SCHEMA],
    })
    for await (const account of playerAccountIterator) {
-      console.log('Existing account: ', account)
+      // console.log('Existing account: ', account)
       existingPlayerAccounts.push(account.value)
    }
-   console.log('Existing accounts: ', existingPlayerAccounts)
+   // console.log('Existing accounts: ', existingPlayerAccounts)
    for (const playerAccount of existingPlayerAccounts) {
       await kvInstance.delete([PLAYER_ACCOUNT_SCHEMA, playerAccount.playerId])
       await kvInstance.delete([
